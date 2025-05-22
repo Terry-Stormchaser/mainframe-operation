@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Unblocker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #videoContainer {
+            margin-top: 20px;
+            max-width: 100%;
+        }
+        iframe {
+            width: 560px;
+            height: 315px;
+            max-width: 100%;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Unblocker</h1>
+        <p>Paste a YouTube video link and click "Watch" to view it.</p>
+        <input type="text" id="youtubeLink" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+        <button onclick="embedVideo()">Watch</button>
+        <div id="videoContainer"></div>
+        <div id="errorMessage" class="error"></div>
+    </div>
+
+    <script>
+        function extractVideoId(url) {
+            // Match YouTube URL patterns (e.g., youtube.com/watch?v=ID or youtu.be/ID)
+            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        function embedVideo() {
+            const url = document.getElementById('youtubeLink').value;
+            const videoContainer = document.getElementById('videoContainer');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Clear previous content
+            videoContainer.innerHTML = '';
+            errorMessage.textContent = '';
+
+            const videoId = extractVideoId(url);
+            if (videoId) {
+                // Embed video using youtube-nocookie.com
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                iframe.allowFullscreen = true;
+                videoContainer.appendChild(iframe);
+            } else {
+                errorMessage.textContent = 'Invalid YouTube URL. Please enter a valid video link.';
+            }
+        }
+
+        // Allow pressing Enter to trigger the Watch button
+        document.getElementById('youtubeLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                embedVideo();
+            }
+        });
+    </script>
+</body>
+</html>
