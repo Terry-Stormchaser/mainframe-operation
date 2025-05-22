@@ -29,6 +29,12 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+        select {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
         button {
             padding: 10px 20px;
             background-color: #28a745;
@@ -77,11 +83,15 @@
         <h1>YouTube Unblocker</h1>
         <p>Paste a YouTube video link and click "Watch" to view it.</p>
         <input type="text" id="youtubeLink" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+        <select id="domainSelect">
+            <option value="nocookie">Use youtube-nocookie.com (less tracking)</option>
+            <option value="youtube">Use youtube.com (may support fullscreen)</option>
+        </select>
         <button onclick="embedVideo()">Watch</button>
         <div id="videoContainer"></div>
         <div id="errorMessage" class="error"></div>
         <div id="fallbackLink" class="fallback"></div>
-        <p class="note">Note: For fewer ads, install uBlock Origin on your browser. If fullscreen doesn't work, try the link below the video or use a personal device. Use responsibly!</p>
+        <p class="note">Note: For fewer ads, install uBlock Origin. If fullscreen fails, try switching domains or use the link below the video. On school devices, use a personal device. Use responsibly!</p>
     </div>
 
     <script>
@@ -99,6 +109,7 @@
 
         function embedVideo() {
             const url = document.getElementById('youtubeLink').value;
+            const domain = document.getElementById('domainSelect').value;
             const videoContainer = document.getElementById('videoContainer');
             const errorMessage = document.getElementById('errorMessage');
             const fallbackLink = document.getElementById('fallbackLink');
@@ -110,21 +121,28 @@
 
             const videoId = extractVideoId(url);
             if (videoId) {
-                // Embed video using youtube-nocookie.com with optimized parameters
+                // Choose domain based on user selection
+                const baseUrl = domain === 'nocookie' ? 'www.youtube-nocookie.com' : 'www.youtube.com';
+                const watchUrl = domain === 'nocookie' ? `https://www.youtube-nocookie.com/watch?v=${videoId}` : `https://www.youtube.com/watch?v=${videoId}`;
+
+                // Embed video with optimized parameters
                 videoContainer.innerHTML = `
                     <iframe
-                        src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0&iv_load_policy=3"
+                        src="https://${baseUrl}/embed/${videoId}?rel=0&iv_load_policy=3"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                         allowfullscreen
                         title="YouTube Video"
                     ></iframe>
                 `;
 
-                // Provide fallback link if fullscreen is unsupported
+                // Provide fallback link
+                fallbackLink.innerHTML = `
+                    <p>If fullscreen doesn't work, <a href="${watchUrl}" target="_blank">open video in new tab</a> or try the other domain.
+                `;
+
+                // Warn if fullscreen is unsupported
                 if (!checkFullscreenSupport()) {
-                    fallbackLink.innerHTML = `
-                        <p>Fullscreen may not work in this browser. <a href="https://www.youtube-nocookie.com/watch?v=${videoId}" target="_blank">Open video in new tab</a> instead.
-                    `;
+                    errorMessage.textContent = 'This browser may not support fullscreen. Try the link below or a different browser.';
                 }
             } else {
                 errorMessage.textContent = 'Invalid YouTube URL. Please enter a valid video link.';
