@@ -6,25 +6,110 @@
     <title>YouTube Unblocker</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', Arial, sans-serif; /* Using Inter for consistency */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background: linear-gradient(to bottom right, #6366f1, #a855f7); /* Gradient background */
+            color: #333;
         }
+
+        /* Styles for the password gate container */
+        #passwordGate {
+            background-color: white;
+            padding: 32px; /* Increased padding */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            width: 100%;
+            max-width: 480px; /* Increased max-width */
+            text-align: center;
+            transition: all 0.3s ease-in-out; /* Smooth transitions */
+            transform: scale(1);
+        }
+        #passwordGate:hover {
+            transform: scale(1.02); /* Slight scale on hover */
+        }
+
+        #passwordGate h2 {
+            font-size: 2.25rem; /* Larger heading */
+            font-weight: bold;
+            color: #1f2937; /* Darker text */
+            margin-bottom: 24px;
+        }
+
+        #passwordGate .disclaimer {
+            font-size: 0.875rem;
+            color: #dc2626; /* Red for disclaimer */
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        #passwordGate label {
+            display: block;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        #passwordGate input[type="password"] {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 12px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px; /* Rounded input */
+            font-size: 1rem;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #passwordGate input[type="password"]:focus {
+            border-color: #60a5fa; /* Blue focus ring */
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.4);
+        }
+
+        #passwordGate button {
+            width: 100%;
+            padding: 14px 20px;
+            background-color: #3b82f6; /* Blue button */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+        #passwordGate button:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift on hover */
+        }
+
+        #passwordGate .error-message {
+            color: #ef4444; /* Red for error */
+            font-size: 0.875rem;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        /* Existing styles for the YouTube Unblocker content */
         .container {
             text-align: center;
             padding: 20px;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px; /* Adjusted max-width for content */
+            display: none; /* Hidden by default */
         }
         input {
             padding: 10px;
-            width: 300px;
+            width: calc(100% - 20px); /* Adjust for padding */
             margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -34,6 +119,7 @@
             margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 4px;
+            width: 100%; /* Full width for select */
         }
         button {
             padding: 10px 20px;
@@ -76,10 +162,41 @@
         .fallback a:hover {
             text-decoration: underline;
         }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #passwordGate, .container {
+                padding: 20px;
+                margin: 0 10px;
+            }
+            #passwordGate h2 {
+                font-size: 1.75rem;
+            }
+            iframe {
+                width: 100%;
+                height: 250px; /* Adjust height for smaller screens */
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="passwordGate">
+        <h2>Password Required</h2>
+        <p class="disclaimer">
+            Disclaimer: This is a client-side password check and is NOT secure for sensitive data.
+            The password is visible in the source code.
+        </p>
+        <form id="passwordForm">
+            <div>
+                <label for="passwordInput">Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter password" required>
+            </div>
+            <p id="passwordErrorMessage" class="error-message"></p>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div class="container" id="protectedContent">
         <h1>YouTube Unblocker</h1>
         <p>Paste a YouTube video link and click "Watch" to view it.</p>
         <input type="text" id="youtubeLink" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
@@ -95,15 +212,47 @@
     </div>
 
     <script>
+        // --- Password Gate Logic ---
+        const SECRET_PASSWORD = 'A330'; // <--- !!! YOU MUST CHANGE THIS !!!
+
+        const passwordGate = document.getElementById('passwordGate');
+        const passwordForm = document.getElementById('passwordForm');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordErrorMessage = document.getElementById('passwordErrorMessage');
+        const protectedContent = document.getElementById('protectedContent');
+
+        // Function to handle password submission
+        function checkPassword(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            if (passwordInput.value === SECRET_PASSWORD) {
+                passwordGate.style.display = 'none'; // Hide the password gate
+                protectedContent.style.display = 'block'; // Show the protected content
+                passwordErrorMessage.textContent = ''; // Clear any error messages
+            } else {
+                passwordErrorMessage.textContent = 'Incorrect password. Please try again.';
+                passwordInput.value = ''; // Clear the input field
+            }
+        }
+
+        // Add event listener for form submission
+        passwordForm.addEventListener('submit', checkPassword);
+
+        // Allow pressing Enter in the password field to submit
+        passwordInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkPassword(event);
+            }
+        });
+
+        // --- Existing YouTube Unblocker Logic ---
         function extractVideoId(url) {
-            // Match YouTube URL patterns (e.g., youtube.com/watch?v=ID or youtu.be/ID)
             const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
             const match = url.match(regex);
             return match ? match[1] : null;
         }
 
         function checkFullscreenSupport() {
-            // Check if fullscreen is supported by the browser
             return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled || document.msFullscreenEnabled);
         }
 
@@ -114,18 +263,15 @@
             const errorMessage = document.getElementById('errorMessage');
             const fallbackLink = document.getElementById('fallbackLink');
 
-            // Clear previous content
             videoContainer.innerHTML = '';
             errorMessage.textContent = '';
             fallbackLink.innerHTML = '';
 
             const videoId = extractVideoId(url);
             if (videoId) {
-                // Choose domain based on user selection
                 const baseUrl = domain === 'nocookie' ? 'www.youtube-nocookie.com' : 'www.youtube.com';
                 const watchUrl = domain === 'nocookie' ? `https://www.youtube-nocookie.com/watch?v=${videoId}` : `https://www.youtube.com/watch?v=${videoId}`;
 
-                // Embed video with optimized parameters
                 videoContainer.innerHTML = `
                     <iframe
                         src="https://${baseUrl}/embed/${videoId}?rel=0&iv_load_policy=3"
@@ -135,12 +281,10 @@
                     ></iframe>
                 `;
 
-                // Provide fallback link
                 fallbackLink.innerHTML = `
                     <p>If fullscreen doesn't work, <a href="${watchUrl}" target="_blank">open video in new tab</a> or try the other domain.
                 `;
 
-                // Warn if fullscreen is unsupported
                 if (!checkFullscreenSupport()) {
                     errorMessage.textContent = 'This browser may not support fullscreen. Try the link below or a different browser.';
                 }
@@ -149,7 +293,6 @@
             }
         }
 
-        // Allow pressing Enter to trigger the Watch button
         document.getElementById('youtubeLink').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 embedVideo();
