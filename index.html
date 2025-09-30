@@ -200,7 +200,7 @@
         <p>Paste a YouTube video link and click "Watch" to view it.</p>
         <input type="text" id="youtubeLink" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
         <select id="domainSelect">
-            <option value="youtube">Use youtube.com (may support fullscreen)</option>
+            <option value="nocookie">Use youtube-nocookie.com (only at home)</option>
             <option value="education">Use youtubeeducation.com (works at school)</option>
         </select>
         <button onclick="embedVideo()">Watch</button>
@@ -268,8 +268,8 @@
 
             const videoId = extractVideoId(url);
             if (videoId) {
-                const baseUrl = domain === 'education' ? 'www.youtubeeducation.com' : 'www.youtube.com';
-                const watchUrl = domain === 'education' ? `https://www.youtubeeducation.com/watch?v=${videoId}` : `https://www.youtube.com/watch?v=${videoId}`;
+                const baseUrl = domain === 'education' ? 'www.youtubeeducation.com' : 'www.youtube-nocookie.com';
+                const watchUrl = domain === 'education' ? `https://www.youtubeeducation.com/watch?v=${videoId}` : `https://www.youtube-nocookie.com/watch?v=${videoId}`;
 
                 videoContainer.innerHTML = `
                     <iframe
